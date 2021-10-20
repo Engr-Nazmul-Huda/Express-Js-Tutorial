@@ -1,15 +1,80 @@
 
 var express= require('express');
+var bodyParser= require('body-parser')
+var multer= require('multer')
+//var multerInstance= multer();
+var app = express();
+
+app.use(bodyParser.json());
+//app.use(multerInstance.array());
+app.use(express.static('public'))
 
 
-app = express();
+/*
+Use of middleware:
+1. User agent check, valid request check
+2. authentication, authorization, verification
+3. request limiting and others security measures
 
-app.get('/', function(req, res){
-res.send('hello express js');
+middleware placing:
+1. application level: single class can maintain all
+2. route level
+*/
+
+/*
+ app.use(function (req,res,next){
+     console.log("I am application level middleware");
+     next();
+ })
+*/
+
+//route level middleware
+app.use('/about',function (req,res,next){
+    console.log("I am route level middleware");
+    next();
 })
 
-app.post('/about', function(req, res){
-    res.send('This is about page');
+
+var storage= multer.diskStorage({
+    destination: function (req, file, callBack){
+        callBack(null, './Uploads');
+    },
+    filename: function (req,file,callBack){
+        callBack(null, file.originalname);
+    }
+})
+
+var upload= multer({storage:storage}).single('myFile');
+
+app.post('/uploadFile', function(req,res){
+    upload(req,res, function (error){
+        if(error){
+            res.send("file upload fail")
+        }
+        else{
+            res.send("file upload success")
+        }
+    })
+})
+
+
+
+
+
+
+
+
+app.get('/', function(req, res){
+var firstName= req.query.firstName;
+var lastName=req.query.lastName;
+res.send(firstName+' '+ lastName);
+})
+
+
+app.get('/about', function(req, res){
+    var firstName= req.header('firstName');
+    var lastName=req.header('lastName');
+    res.send(firstName+' '+ lastName);
 })
 /*
 1. string response
@@ -104,6 +169,30 @@ post request:
 => request multipart form data
 => request file upload
  */
+//Json data from body using body-parser from post request
+
+app.post('/register', function(req, res){
+    var jsonData= req.body;
+   // var jsonString= JSON.stringify(jsonData);
+    //res.send(jsonString)
+   let name= jsonData.name;
+   let city=jsonData['city'];
+   res.send(name+"  "+ city)
+})
+
+
+// post multi part form data using multer
+app.post('/enroll', function(req, res){
+    var jsonData= req.body;
+    // var jsonString= JSON.stringify(jsonData);
+    //res.send(jsonString)
+    let name= jsonData.name;
+    let city=jsonData['city'];
+    let country= jsonData.country;
+    res.send(name+"  "+ city+" "+ country)
+    // res.send(JSON.stringify(jsonData));
+})
+
 
 
 app.listen(8000, function(){
